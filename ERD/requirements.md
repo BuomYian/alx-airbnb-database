@@ -128,8 +128,6 @@ alx-airbnb-database/
 - A complete **ER diagram** (`ERD.drawio` or equivalent) showing all entities and relationships.
 - This **requirements.md** file documenting attributes, keys, and relationships.
 
----
-
 ```
 
 ```
