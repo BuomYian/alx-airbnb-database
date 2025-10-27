@@ -97,6 +97,189 @@ CREATE INDEX idx_bookings_user_covering ON bookings(user_id) INCLUDE (id);
 CREATE INDEX idx_bookings_property_covering ON bookings(property_id) INCLUDE (id);
 
 -- ============================================================================
+-- PERFORMANCE MEASUREMENT: EXPLAIN ANALYZE
+-- ============================================================================
+-- These queries demonstrate the performance impact of indexes
+-- Run these BEFORE creating indexes to see baseline performance
+-- Then run them AFTER creating indexes to measure improvement
+-- ============================================================================
+
+-- ============================================================================
+-- QUERY 1: User Booking Aggregation (Benefits from idx_bookings_user_id)
+-- ============================================================================
+-- BEFORE INDEX: Run this to see baseline performance
+-- EXPLAIN ANALYZE
+-- SELECT 
+--     u.id,
+--     u.name,
+--     COUNT(b.id) as total_bookings
+-- FROM users u
+-- LEFT JOIN bookings b ON u.id = b.user_id
+-- GROUP BY u.id, u.name
+-- ORDER BY total_bookings DESC;
+
+-- AFTER INDEX: Run this to see improved performance
+EXPLAIN ANALYZE
+SELECT 
+    u.id,
+    u.name,
+    COUNT(b.id) as total_bookings
+FROM users u
+LEFT JOIN bookings b ON u.id = b.user_id
+GROUP BY u.id, u.name
+ORDER BY total_bookings DESC;
+
+-- ============================================================================
+-- QUERY 2: Property Booking Status Filter (Benefits from idx_bookings_property_status)
+-- ============================================================================
+-- BEFORE INDEX: Run this to see baseline performance
+-- EXPLAIN ANALYZE
+-- SELECT 
+--     p.id,
+--     p.title,
+--     COUNT(b.id) as total_bookings,
+--     SUM(CASE WHEN b.status = 'completed' THEN 1 ELSE 0 END) as completed_bookings
+-- FROM properties p
+-- LEFT JOIN bookings b ON p.id = b.property_id
+-- WHERE b.status IN ('completed', 'confirmed')
+-- GROUP BY p.id, p.title
+-- ORDER BY total_bookings DESC;
+
+-- AFTER INDEX: Run this to see improved performance
+EXPLAIN ANALYZE
+SELECT 
+    p.id,
+    p.title,
+    COUNT(b.id) as total_bookings,
+    SUM(CASE WHEN b.status = 'completed' THEN 1 ELSE 0 END) as completed_bookings
+FROM properties p
+LEFT JOIN bookings b ON p.id = b.property_id
+WHERE b.status IN ('completed', 'confirmed')
+GROUP BY p.id, p.title
+ORDER BY total_bookings DESC;
+
+-- ============================================================================
+-- QUERY 3: Location-Based Property Search (Benefits from idx_properties_location)
+-- ============================================================================
+-- BEFORE INDEX: Run this to see baseline performance
+-- EXPLAIN ANALYZE
+-- SELECT 
+--     p.id,
+--     p.title,
+--     p.location,
+--     COUNT(b.id) as booking_count,
+--     AVG(r.rating) as avg_rating
+-- FROM properties p
+-- LEFT JOIN bookings b ON p.id = b.property_id
+-- LEFT JOIN reviews r ON p.id = r.property_id
+-- WHERE p.location = 'New York'
+-- GROUP BY p.id, p.title, p.location
+-- ORDER BY booking_count DESC;
+
+-- AFTER INDEX: Run this to see improved performance
+EXPLAIN ANALYZE
+SELECT 
+    p.id,
+    p.title,
+    p.location,
+    COUNT(b.id) as booking_count,
+    AVG(r.rating) as avg_rating
+FROM properties p
+LEFT JOIN bookings b ON p.id = b.property_id
+LEFT JOIN reviews r ON p.id = r.property_id
+WHERE p.location = 'New York'
+GROUP BY p.id, p.title, p.location
+ORDER BY booking_count DESC;
+
+-- ============================================================================
+-- QUERY 4: User Email Lookup (Benefits from idx_users_email)
+-- ============================================================================
+-- BEFORE INDEX: Run this to see baseline performance
+-- EXPLAIN ANALYZE
+-- SELECT 
+--     u.id,
+--     u.name,
+--     u.email,
+--     COUNT(b.id) as total_bookings
+-- FROM users u
+-- LEFT JOIN bookings b ON u.id = b.user_id
+-- WHERE u.email = 'user@example.com'
+-- GROUP BY u.id, u.name, u.email;
+
+-- AFTER INDEX: Run this to see improved performance
+EXPLAIN ANALYZE
+SELECT 
+    u.id,
+    u.name,
+    u.email,
+    COUNT(b.id) as total_bookings
+FROM users u
+LEFT JOIN bookings b ON u.id = b.user_id
+WHERE u.email = 'user@example.com'
+GROUP BY u.id, u.name, u.email;
+
+-- ============================================================================
+-- QUERY 5: Property Review Aggregation (Benefits from idx_reviews_property_id, idx_reviews_rating)
+-- ============================================================================
+-- BEFORE INDEX: Run this to see baseline performance
+-- EXPLAIN ANALYZE
+-- SELECT 
+--     p.id,
+--     p.title,
+--     COUNT(r.id) as review_count,
+--     AVG(r.rating) as avg_rating,
+--     MAX(r.rating) as max_rating,
+--     MIN(r.rating) as min_rating
+-- FROM properties p
+-- LEFT JOIN reviews r ON p.id = r.property_id
+-- GROUP BY p.id, p.title
+-- HAVING COUNT(r.id) > 0
+-- ORDER BY avg_rating DESC;
+
+-- AFTER INDEX: Run this to see improved performance
+EXPLAIN ANALYZE
+SELECT 
+    p.id,
+    p.title,
+    COUNT(r.id) as review_count,
+    AVG(r.rating) as avg_rating,
+    MAX(r.rating) as max_rating,
+    MIN(r.rating) as min_rating
+FROM properties p
+LEFT JOIN reviews r ON p.id = r.property_id
+GROUP BY p.id, p.title
+HAVING COUNT(r.id) > 0
+ORDER BY avg_rating DESC;
+
+-- ============================================================================
+-- PERFORMANCE ANALYSIS INSTRUCTIONS
+-- ============================================================================
+-- To measure performance improvement:
+--
+-- 1. BASELINE MEASUREMENT (Before Indexes):
+--    - Comment out the CREATE INDEX statements below
+--    - Uncomment the "BEFORE INDEX" EXPLAIN ANALYZE queries above
+--    - Run each query and note the "Planning Time" and "Execution Time"
+--    - Record the total rows scanned and execution plan
+--
+-- 2. CREATE INDEXES:
+--    - Run all the CREATE INDEX statements below
+--    - Wait for index creation to complete
+--
+-- 3. PERFORMANCE MEASUREMENT (After Indexes):
+--    - Run the "AFTER INDEX" EXPLAIN ANALYZE queries above
+--    - Compare the "Planning Time" and "Execution Time" with baseline
+--    - Calculate the percentage improvement
+--
+-- 4. EXPECTED RESULTS:
+--    - Query 1: 50-80% faster (JOIN optimization)
+--    - Query 2: 60-90% faster (WHERE clause optimization)
+--    - Query 3: 40-70% faster (Location filtering)
+--    - Query 4: 70-95% faster (Email lookup)
+--    - Query 5: 30-60% faster (Aggregation optimization)
+-- ============================================================================
+
+-- ============================================================================
 -- INDEX MAINTENANCE QUERIES
 -- ============================================================================
 -- Use these queries to monitor and maintain indexes
