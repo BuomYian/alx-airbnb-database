@@ -29,3 +29,18 @@ This section demonstrates the use of both correlated and non-correlated subqueri
 
 - **Non-correlated subquery:** Executes independently and returns a result used by the outer query.
 - **Correlated subquery:** Depends on the outer query; it runs once per row of the outer query.
+
+## Aggregations and Window Functions
+
+This section explores the use of SQL aggregate and window functions to analyze Airbnb data.
+
+### Files
+
+- **aggregations_and_window_functions.sql**
+  - Query 1: Uses `COUNT` and `GROUP BY` to find the total number of bookings per user.
+  - Query 2: Uses `RANK` window function to rank properties by the total number of bookings received.
+
+### Concepts
+
+- **Aggregate Functions:** Perform calculations on groups of rows (e.g., `COUNT`, `SUM`, `AVG`).
+- **Window Functions:** Perform calculations across sets of rows related to the current row, without collapsing results into a single row.
